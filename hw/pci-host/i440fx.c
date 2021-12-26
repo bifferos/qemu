@@ -309,6 +309,11 @@ PCIBus *i440fx_init(const char *host_type, const char *pci_type,
     }
     d->config[I440FX_COREBOOT_RAM_SIZE] = ram_size;
 
+    d->config[0x90] = 0x00;
+    d->config[0x91] = 0x10;
+    d->config[0x92] = 0x32;
+    d->config[0x93] = 0x00;
+
     i440fx_update_memory_mappings(f);
 
     return b;
@@ -321,8 +326,10 @@ static void i440fx_class_init(ObjectClass *klass, void *data)
 
     k->realize = i440fx_realize;
     k->config_write = i440fx_write_config;
-    k->vendor_id = PCI_VENDOR_ID_INTEL;
-    k->device_id = PCI_DEVICE_ID_INTEL_82441;
+//    k->vendor_id = PCI_VENDOR_ID_INTEL;
+//    k->device_id = PCI_DEVICE_ID_INTEL_82441;
+    k->vendor_id = PCI_VENDOR_ID_RDC;
+    k->device_id = PCI_DEVICE_ID_RDC_R6020;
     k->revision = 0x02;
     k->class_id = PCI_CLASS_BRIDGE_HOST;
     dc->desc = "Host bridge";
