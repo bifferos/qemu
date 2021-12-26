@@ -90,7 +90,7 @@ struct PFlashCFI02 {
     uint16_t ident3;
     uint16_t unlock_addr0;
     uint16_t unlock_addr1;
-    uint8_t cfi_table[0x4d];
+    uint8_t cfi_table[0x50];
     QEMUTimer timer;
     /*
      * The device replicates the flash memory across its memory space.  Emulate
@@ -809,7 +809,9 @@ static void pflash_cfi02_fill_cfi_table(PFlashCFI02 *pfl, int nb_regions)
     pfl->cfi_table[0x0b + pri_ofs] = 0x00;
     /* Page mode not supported. */
     pfl->cfi_table[0x0c + pri_ofs] = 0x00;
-    assert(0x0c + pri_ofs < ARRAY_SIZE(pfl->cfi_table));
+    /* Top/bottom boot sector */
+    pfl->cfi_table[0x0f + pri_ofs] = 0x02;
+    assert(0x0f + pri_ofs < ARRAY_SIZE(pfl->cfi_table));
 }
 
 static void pflash_cfi02_realize(DeviceState *dev, Error **errp)
