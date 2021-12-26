@@ -131,6 +131,12 @@ config AMD_IOMMU
     bool
     select X86_IOMMU
 
+config RDC3210
+    bool
+    imply R6040_PCI
+    select I440FX
+    select PFLASH_CFI02
+
 config VMPORT
     bool
 

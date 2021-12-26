@@ -90,7 +90,7 @@ struct PFlashCFI02 {
     uint16_t ident3;
     uint16_t unlock_addr0;
     uint16_t unlock_addr1;
-    uint8_t cfi_table[0x4d];
+    uint8_t cfi_table[0x50];
     QEMUTimer timer;
     /*
      * The device replicates the flash memory across its memory space.  Emulate
@@ -316,12 +316,14 @@ static uint64_t pflash_read(void *opaque, hwaddr offset, unsigned int width)
         pflash_mode_read_array(pfl);
     }
     offset &= pfl->chip_len - 1;
-    boff = offset & 0xFF;
-    if (pfl->width == 2) {
+    boff = offset;
+    if (width == 2) {
         boff = boff >> 1;
-    } else if (pfl->width == 4) {
+    } else if (width == 4) {
         boff = boff >> 2;
     }
+    /* Only the least-significant 11 bits are used in most cases. */
+    boff &= 0x7FF;
     switch (pfl->cmd) {
     default:
         /* This should never happen : reset state & treat it as a read*/
@@ -350,10 +352,18 @@ static uint64_t pflash_read(void *opaque, hwaddr offset, unsigned int width)
             ret = boff & 0x01 ? pfl->ident1 : pfl->ident0;
             break;
         case 0x02:
-            ret = 0x00; /* Pretend all sectors are unprotected */
+            // TODO: check if offset == sector address instead of this
+            if (width == pfl->width) {
+                ret = 0x00; /* Pretend all sectors are unprotected */
+            }
+            else {
+                ret = pfl->ident1 & ((1 << (width * 8)) - 1);
+            }
             break;
         case 0x0E:
         case 0x0F:
+        case 0x100:
+        case 0x200:
             ret = boff & 0x01 ? pfl->ident3 : pfl->ident2;
             if (ret != (uint8_t)-1) {
                 break;
@@ -809,7 +819,9 @@ static void pflash_cfi02_fill_cfi_table(PFlashCFI02 *pfl, int nb_regions)
     pfl->cfi_table[0x0b + pri_ofs] = 0x00;
     /* Page mode not supported. */
     pfl->cfi_table[0x0c + pri_ofs] = 0x00;
-    assert(0x0c + pri_ofs < ARRAY_SIZE(pfl->cfi_table));
+    /* Top/bottom boot sector */
+    pfl->cfi_table[0x0f + pri_ofs] = 0x02;
+    assert(0x0f + pri_ofs < ARRAY_SIZE(pfl->cfi_table));
 }
 
 static void pflash_cfi02_realize(DeviceState *dev, Error **errp)
