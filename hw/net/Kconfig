@@ -49,6 +49,11 @@ config RTL8139_PCI
     default y if PCI_DEVICES
     depends on PCI
 
+config R6040_PCI
+    bool
+    default y if PCI_DEVICES
+    depends on PCI
+
 config VMXNET3_PCI
     bool
     default y if PCI_DEVICES
